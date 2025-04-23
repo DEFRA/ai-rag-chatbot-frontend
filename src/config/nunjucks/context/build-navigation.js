@@ -12,6 +12,11 @@ export function buildNavigation(request) {
       text: 'About',
       url: '/about',
       isActive: request?.path === '/about'
+    },
+    {
+      text: 'Chat',
+      url: '/chat',
+      isActive: request?.path === '/chat'
     }
   ]
 }

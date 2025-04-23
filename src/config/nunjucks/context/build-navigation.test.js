@@ -21,6 +21,11 @@ describe('#buildNavigation', () => {
         isActive: false,
         text: 'About',
         url: '/about'
+      },
+      {
+        isActive: false,
+        text: 'Chat',
+        url: '/chat'
       }
     ])
   })
@@ -36,6 +41,11 @@ describe('#buildNavigation', () => {
         isActive: false,
         text: 'About',
         url: '/about'
+      },
+      {
+        isActive: false,
+        text: 'Chat',
+        url: '/chat'
       }
     ])
   })

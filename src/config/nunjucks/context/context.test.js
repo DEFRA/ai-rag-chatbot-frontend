@@ -45,6 +45,11 @@ describe('#context', () => {
             isActive: false,
             text: 'About',
             url: '/about'
+          },
+          {
+            isActive: false,
+            text: 'Chat',
+            url: '/chat'
           }
         ],
         serviceName: 'ai-rag-chatbot-frontend',
@@ -134,6 +139,11 @@ describe('#context cache', () => {
             isActive: false,
             text: 'About',
             url: '/about'
+          },
+          {
+            isActive: false,
+            text: 'Chat',
+            url: '/chat'
           }
         ],
         serviceName: 'ai-rag-chatbot-frontend',
