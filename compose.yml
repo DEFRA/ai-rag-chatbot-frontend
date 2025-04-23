@@ -1,4 +1,5 @@
 version: '3.4'
+# RUNS BOTH THE BACKEND AND FRONTEND SERVICES PLEASE PLACE IT IN THE ROOT OF THE PROJECT where both the frontend and backend folders are located e.g. ai-rag-chatbot/frontend and ai-rag-chatbot/backend, so compose would be in ai-rag-chatbot/compose.yml
 services:
 
   localstack:
@@ -7,7 +8,8 @@ services:
       - '4566:4566' # LocalStack Gateway
       - '4510-4559:4510-4559' # external services port range
     env_file:
-      - 'compose/aws.env'
+      - './ai-rag-chatbot-frontend/compose/aws.env'
+
     environment:
       DEBUG: ${DEBUG:-1}
       LS_LOG: WARN # Localstack DEBUG Level
@@ -42,10 +44,12 @@ services:
       - mongodb-data:/data
     restart: always
 
-################################################################################
+  ################################################################################
+  # Frontend Service
+  ################################################################################
 
-  your-frontend:
-    build: ./
+  frontend-service:
+    build: ./ai-rag-chatbot-frontend
     ports:
       - '3000:3000'
     links:
@@ -57,7 +61,8 @@ services:
       redis:
         condition: service_started
     env_file:
-      - 'compose/aws.env'
+      - './ai-rag-chatbot-frontend/compose/aws.env'
+
     environment:
       PORT: 3000
       NODE_ENV: development
@@ -67,27 +72,53 @@ services:
     networks:
       - cdp-tenant
 
-  # your-backend:
-  #   image: defradigital/your-backend:${YOUR_BACKEND_VERSION:-latest}
-  #   ports:
-  #     - '3555:3555'
-  #   links:
-  #     - 'localstack:localstack'
-  #     - 'mongodb:mongodb'
-  #   depends_on:
-  #     localstack:
-  #       condition: service_healthy
-  #     mongodb:
-  #       condition: service_started
-  #   env_file:
-  #     - 'compose/aws.env'
-  #   environment:
-  #     PORT: 3555
-  #     NODE_ENV: development
-  #     LOCALSTACK_ENDPOINT: http://localstack:4566
-  #   networks:
-  #     - cdp-tenant
 
+  ################################################################################
+  # Backend Service
+  ################################################################################
+  backend-service:
+    build:
+      context: ./ai-rag-chatbot-backend
+    ports:
+      - '8085:8085'
+    links:
+      - 'localstack:localstack'
+      - 'mongodb:mongodb'
+    depends_on:
+      localstack:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+    env_file:
+      - './ai-rag-chatbot-backend/compose/aws.env'
+      - './ai-rag-chatbot-backend/compose/secrets.env'
+    environment:
+      PORT: 8085
+      NODE_ENV: development
+      LOCALSTACK_ENDPOINT: http://localstack:4566
+      MONGO_URI: mongodb://mongodb:27017/
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          ignore:
+            - README.md
+            - "**/*.md"
+            - "**/test_*.py"
+            - tests/**/*
+            - .git/**/*
+            - .venv/**/*
+            - .pytest_cache/**/*
+            - .ruff_cache/**/*
+            - .vscode/**/*
+            - .github/**/*
+            - requirements-dev.txt
+            - pytest.ini
+            - .pre-commit-config.yaml
+            - sonar-project.properties
+            - LICENCE
+    networks:
+      - cdp-tenant
 ################################################################################
 
 volumes:
