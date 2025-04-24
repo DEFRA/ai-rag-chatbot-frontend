@@ -13,7 +13,23 @@ export const chat = {
         {
           method: 'GET',
           path: '/chat',
-          ...chatController
+          handler: chatController.getChatPage // Use the specific handler for GET
+        },
+        {
+          method: 'POST',
+          path: '/api/chat', // Use a distinct path for the API endpoint
+          handler: chatController.handleChatQuery, // Use the new handler for POST
+          options: {
+            // Optional: Add payload validation if needed
+            // payload: {
+            //   parse: true,
+            //   allow: 'application/json'
+            // },
+            // Optional: Add CSRF protection if your app uses it
+            // plugins: {
+            //   crumb: true // Example if using @hapi/crumb
+            // }
+          }
         }
       ])
     }
