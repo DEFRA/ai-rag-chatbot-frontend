@@ -64,9 +64,24 @@
     function addMessage(sender, message) {
       const messageElement = document.createElement('p');
       messageElement.classList.add('govuk-body');
-      messageElement.innerHTML = `<strong>${sender}:</strong> `; // Use innerHTML to render strong tag
-      // Append message text safely to prevent XSS if message contained HTML
-      messageElement.appendChild(document.createTextNode(message));
+
+      // Prepare the message content
+      let formattedMessage = message;
+      if (sender === 'AI' || sender === 'Error') {
+          // Replace newline characters with <br> tags
+          // Basic sanitization: replace < > to prevent simple HTML injection
+          // NOTE: This is NOT a robust XSS prevention method.
+          const sanitizedMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          formattedMessage = sanitizedMessage.replace(/\n/g, '<br>');
+      } else {
+          // For user messages, just sanitize simply
+          formattedMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+
+      // Use innerHTML to render the sender and the formatted message
+      messageElement.innerHTML = `<strong>${sender}:</strong> ${formattedMessage}`;
+
       chatOutput.appendChild(messageElement);
       // Scroll to the bottom
       chatOutput.scrollTop = chatOutput.scrollHeight;

@@ -34,7 +34,7 @@ const handleChatQuery = async (request, h) => {
     return Boom.badRequest('Missing or invalid "query" in request body.')
   }
 
-  console.log(`Forwarding query to backend: ${userQuery}`) // Server log
+  // console.log(`Forwarding query to backend: ${userQuery}`) // Server log
 
   try {
     const { res, payload } = await Wreck.post(backendUrl, {
@@ -48,7 +48,7 @@ const handleChatQuery = async (request, h) => {
     })
 
     // Log backend status code
-    console.log(`Backend response status: ${res.statusCode}`)
+    // console.log(`Backend response status: ${res.statusCode}`)
 
     // Check if the backend responded with an error status code
     if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -57,7 +57,7 @@ const handleChatQuery = async (request, h) => {
         payload?.message ||
         payload?.error ||
         `Backend returned status ${res.statusCode}`
-      console.error(`Backend error: ${errorMessage}`, payload)
+      // console.error(`Backend error: ${errorMessage}`, payload)
       // Use Boom to create an appropriate error response for the frontend
       // We map common backend errors to frontend errors. Adjust as needed.
       if (res.statusCode === 400) return Boom.badRequest(errorMessage)
@@ -70,18 +70,14 @@ const handleChatQuery = async (request, h) => {
 
     // Assuming the backend response JSON has the answer in a property, e.g., "answer" or "response"
     // Adjust 'payload.answer' based on the actual structure of your backend's response
-    const aiResponse =
-      payload?.answer ||
-      payload?.response ||
-      payload?.result ||
-      'No specific answer found in response.'
+    const aiResponse = payload?.answer
 
-    console.log(`Received response from backend.`)
+    // console.log(`Received response from backend, AI says: ${aiResponse}`) // Server log
 
     // Send the relevant part of the response back to the frontend client
     return h.response({ answer: aiResponse }).code(200)
   } catch (error) {
-    console.error('Error calling backend API:', error)
+    // console.error('Error calling backend API:', error)
     // Handle network errors or Wreck-specific issues
     if (error.code === 'ECONNREFUSED') {
       return Boom.badGateway('Could not connect to the backend AI service.')
