@@ -1,5 +1,6 @@
 import Wreck from '@hapi/wreck'
 import Boom from '@hapi/boom'
+import { config } from '~/src/config/config.js' // Use config for backend URL
 
 /**
  * Renders the chat page.
@@ -27,28 +28,28 @@ const getChatPage = (_request, h) => {
  * @satisfies {ServerRoute['handler']}
  */
 const handleChatQuery = async (request, h) => {
-  const backendUrl = 'http://localhost:8085/query/' // Your backend API endpoint
+  const backendUrl = config.get('apiServer') + '/query/'
   const userQuery = request.payload?.query // Get query from POST body
 
   if (!userQuery || typeof userQuery !== 'string' || userQuery.trim() === '') {
     return Boom.badRequest('Missing or invalid "query" in request body.')
   }
 
-  // console.log(`Forwarding query to backend: ${userQuery}`) // Server log
+  // Use request.logger if available for logging
+  const logger = request.logger || console
 
   try {
     const { res, payload } = await Wreck.post(backendUrl, {
       headers: {
         'Content-Type': 'application/json'
-        // Add any other headers your backend requires, like Authorization
       },
-      payload: JSON.stringify({ query: userQuery }), // Send in the expected format
-      json: true, // Automatically parse the response payload as JSON
-      timeout: 15000 // Optional: Set a timeout (e.g., 15 seconds)
+      payload: JSON.stringify({ query: userQuery }),
+      json: true,
+      timeout: 15000
     })
 
-    // Log backend status code
-    // console.log(`Backend response status: ${res.statusCode}`)
+    // Log backend status code for traceability
+    logger.info(`Backend response status: ${res.statusCode}`)
 
     // Check if the backend responded with an error status code
     if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -57,9 +58,9 @@ const handleChatQuery = async (request, h) => {
         payload?.message ||
         payload?.error ||
         `Backend returned status ${res.statusCode}`
-      // console.error(`Backend error: ${errorMessage}`, payload)
-      // Use Boom to create an appropriate error response for the frontend
-      // We map common backend errors to frontend errors. Adjust as needed.
+      // Log backend error details for debugging
+      logger.error(`Backend error: ${errorMessage}`, payload)
+      // Map common backend errors to frontend errors
       if (res.statusCode === 400) return Boom.badRequest(errorMessage)
       if (res.statusCode === 401 || res.statusCode === 403)
         return Boom.unauthorized(errorMessage)
@@ -68,16 +69,16 @@ const handleChatQuery = async (request, h) => {
       return Boom.badGateway(`Backend service failed: ${errorMessage}`)
     }
 
-    // Assuming the backend response JSON has the answer in a property, e.g., "answer" or "response"
+    // Assuming the backend response JSON has the answer in a property, e.g., "answer"
     // Adjust 'payload.answer' based on the actual structure of your backend's response
     const aiResponse = payload?.answer
-
-    // console.log(`Received response from backend, AI says: ${aiResponse}`) // Server log
-
+    // Log the AI response for traceability
+    logger.info(`Received response from backend, AI says: ${aiResponse}`)
     // Send the relevant part of the response back to the frontend client
     return h.response({ answer: aiResponse }).code(200)
   } catch (error) {
-    // console.error('Error calling backend API:', error)
+    // Log network or unexpected errors
+    logger.error('Error calling backend API:', error)
     // Handle network errors or Wreck-specific issues
     if (error.code === 'ECONNREFUSED') {
       return Boom.badGateway('Could not connect to the backend AI service.')
