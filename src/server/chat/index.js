@@ -20,15 +20,22 @@ export const chat = {
           path: '/api/chat', // Use a distinct path for the API endpoint
           handler: chatController.handleChatQuery, // Use the new handler for POST
           options: {
-            // Optional: Add payload validation if needed
-            // payload: {
-            //   parse: true,
-            //   allow: 'application/json'
-            // },
-            // Optional: Add CSRF protection if your app uses it
-            // plugins: {
-            //   crumb: true // Example if using @hapi/crumb
-            // }
+            // Payload validation: only allow JSON with a non-empty string 'query'
+            validate: {
+              payload: (value, options) => {
+                if (
+                  !value ||
+                  typeof value.query !== 'string' ||
+                  value.query.trim() === ''
+                ) {
+                  throw new Error('Missing or invalid "query" in request body.')
+                }
+                return value
+              }
+            },
+            // CSRF protection: enable crumb plugin in production
+            plugins:
+              process.env.NODE_ENV === 'production' ? { crumb: true } : {}
           }
         }
       ])
