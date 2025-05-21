@@ -52,6 +52,7 @@
   </div>
 
   {# Client-side Javascript for AJAX #}
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
   <script>
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
@@ -65,25 +66,17 @@
       const messageElement = document.createElement('p');
       messageElement.classList.add('govuk-body');
 
-      // Prepare the message content
+      // Use DOMPurify for robust XSS protection
       let formattedMessage = message;
       if (sender === 'AI' || sender === 'Error') {
-          // Replace newline characters with <br> tags
-          // Basic sanitization: replace < > to prevent simple HTML injection
-          // NOTE: This is NOT a robust XSS prevention method.
-          const sanitizedMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          // Sanitize and format message
+          const sanitizedMessage = DOMPurify.sanitize(message);
           formattedMessage = sanitizedMessage.replace(/\n/g, '<br>');
       } else {
-          // For user messages, just sanitize simply
-          formattedMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          formattedMessage = DOMPurify.sanitize(message);
       }
-
-
-      // Use innerHTML to render the sender and the formatted message
       messageElement.innerHTML = `<strong>${sender}:</strong> ${formattedMessage}`;
-
       chatOutput.appendChild(messageElement);
-      // Scroll to the bottom
       chatOutput.scrollTop = chatOutput.scrollHeight;
     }
 

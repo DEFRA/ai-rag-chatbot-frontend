@@ -22,7 +22,7 @@ export const chat = {
           options: {
             // Payload validation: only allow JSON with a non-empty string 'query'
             validate: {
-              payload: (value, options) => {
+              payload: (value) => {
                 if (
                   !value ||
                   typeof value.query !== 'string' ||
