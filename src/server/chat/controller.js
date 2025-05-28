@@ -38,6 +38,9 @@ const handleChatQuery = async (request, h) => {
   // Use request.logger if available for logging
   const logger = request.logger || console
 
+  // Log the backend URL for debugging
+  logger.info(`Backend URL: ${backendUrl}`)
+
   try {
     const { res, payload } = await Wreck.post(backendUrl, {
       headers: {
@@ -77,7 +80,6 @@ const handleChatQuery = async (request, h) => {
     // Send the relevant part of the response back to the frontend client
     return h.response({ answer: aiResponse }).code(200)
   } catch (error) {
-    // Log network or unexpected errors
     logger.error('Error calling backend API:', error)
     // Handle network errors or Wreck-specific issues
     if (error.code === 'ECONNREFUSED') {

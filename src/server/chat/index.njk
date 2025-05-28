@@ -109,7 +109,7 @@
       addMessage('AI', 'Thinking...'); // Show thinking indicator
 
       try {
-        const response = await fetch('/api/chat', { // Send to our new Hapi API endpoint
+        const response = await fetch('/api/chat/', { // Send to our new Hapi API endpoint
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

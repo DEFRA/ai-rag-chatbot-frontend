@@ -15,7 +15,7 @@ ENV PORT=${PORT}
 EXPOSE ${PORT} ${PORT_DEBUG}
 
 COPY --chown=node:node --chmod=755 package*.json ./
-RUN npm install --ignore-scripts
+RUN npm install --include=dev --ignore-scripts
 COPY --chown=node:node --chmod=755 . .
 RUN npm run build
 

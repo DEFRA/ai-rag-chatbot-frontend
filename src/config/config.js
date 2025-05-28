@@ -219,7 +219,7 @@ export const config = convict({
   apiServer: {
     doc: 'Base URL for the backend API server',
     format: String,
-    default: 'http://localhost:8085',
+    default: 'http://backend-service:8085',
     env: 'API_SERVER'
   }
 })
