@@ -1,0 +1,12 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+<h1>Upload a file</h1>
+<form action="{{ uploadUrl }}" method="post" enctype="multipart/form-data">
+  <div class="govuk-form-group">
+    <label class="govuk-label" for="file">Choose a file to upload</label>
+    <input class="govuk-file-upload" id="file" name="file" type="file" required>
+  </div>
+  <button class="govuk-button" type="submit">Upload</button>
+</form>
+{% endblock %}
