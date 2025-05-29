@@ -1,4 +1,4 @@
-import { getUploadPage } from './controller.js'
+import { getUploadPage, getUploadToUploaderPage } from './controller.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -16,7 +16,16 @@ export const upload = {
         {
           method: 'GET',
           path: '/upload-success',
-          handler: (request, h) => h.view('upload-success')
+          handler: (request, h) => {
+            // Always use the correct template path and pass the reference
+            const reference = request.query.reference
+            return h.view('upload/upload-success', { reference })
+          }
+        },
+        {
+          method: 'GET',
+          path: '/upload-to-uploader',
+          handler: getUploadToUploaderPage
         }
       ])
     }

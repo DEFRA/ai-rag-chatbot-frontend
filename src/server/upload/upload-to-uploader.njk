@@ -2,6 +2,9 @@
 
 {% block content %}
 <h1>Upload a file</h1>
+{% if reference %}
+  <p class="govuk-body">Your reference number: <strong>{{ reference }}</strong></p>
+{% endif %}
 <form action="{{ uploadUrl }}" method="post" enctype="multipart/form-data">
   <div class="govuk-form-group">
     <label class="govuk-label" for="file">Choose a file to upload</label>
