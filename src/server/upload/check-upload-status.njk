@@ -1,0 +1,15 @@
+{% extends "layouts/page.njk" %}
+
+{% block pageTitle %}Check upload status{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">Check the status of your upload</h1>
+  <form class="govuk-form-group" method="post" action="/check-upload-status">
+    <label class="govuk-label govuk-label--m" for="reference">Reference number</label>
+    <input class="govuk-input govuk-!-width-one-third" id="reference" name="reference" type="text" required>
+    <button class="govuk-button" data-module="govuk-button">Check status</button>
+    {% if error %}
+      <span class="govuk-error-message">{{ error }}</span>
+    {% endif %}
+  </form>
+{% endblock %}

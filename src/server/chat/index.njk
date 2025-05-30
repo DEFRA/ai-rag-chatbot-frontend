@@ -1,21 +1,160 @@
 {% extends 'layouts/page.njk' %}
 
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %} {# Using textarea might be better for longer answers #}
+
 {% block content %}
   {{ appHeading({
     text: heading,
-    caption: "Core delivery platform Node.js Frontend Template."
+    caption: "Ask a question to the AI assistant."
   }) }}
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <div class="govuk-body" data-testid="app-page-body">
-        <p>
-          Based on <a href="https://defra.github.io/software-development-standards">DEFRA</a> and <a
-            href="https://design-system.service.gov.uk/">GOV.UK</a> best practices this starter kit provides you with
-          a deployable, production ready template 🙌🏻 to start your new service with.
-        </p>
+
+      {# Container for chat messages #}
+      <div id="chat-output" class="govuk-inset-text" style="min-height: 200px; overflow-y: auto; background-color: #f3f2f1; margin-bottom: 20px;">
+        <p class="govuk-body">AI: Hello! How can I help you today?</p>
       </div>
+
+      {# Chat input form #}
+      <form id="chat-form" method="post" action="/chat"> {# Action isn't strictly needed for AJAX, but good practice #}
+        {{ govukInput({
+          label: {
+            text: "Your question",
+            classes: "govuk-label--m",
+            isPageHeading: false
+          },
+          id: "chat-input",
+          name: "query"
+        }) }}
+
+        {{ govukButton({
+          text: "Send",
+          attributes: {
+            id: "send-button"
+          }
+        }) }}
+      </form>
+
+      {# Area to display errors #}
+      <div id="error-message" class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" tabindex="-1" style="display: none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+          There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+          <p id="error-text"></p>
+        </div>
+      </div>
+
     </div>
   </div>
+
+  {# Client-side Javascript for AJAX #}
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+  <script>
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatOutput = document.getElementById('chat-output');
+    const sendButton = document.getElementById('send-button');
+    const errorMessage = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+
+    // Function to add messages to the chat output
+    function addMessage(sender, message) {
+      const messageElement = document.createElement('p');
+      messageElement.classList.add('govuk-body');
+
+      // Use DOMPurify for robust XSS protection
+      let formattedMessage = message;
+      if (sender === 'AI' || sender === 'Error') {
+          // Sanitize and format message
+          const sanitizedMessage = DOMPurify.sanitize(message);
+          formattedMessage = sanitizedMessage.replace(/\n/g, '<br>');
+      } else {
+          formattedMessage = DOMPurify.sanitize(message);
+      }
+      messageElement.innerHTML = `<strong>${sender}:</strong> ${formattedMessage}`;
+      chatOutput.appendChild(messageElement);
+      chatOutput.scrollTop = chatOutput.scrollHeight;
+    }
+
+    // Function to display errors
+    function displayError(message) {
+        errorText.textContent = message;
+        errorMessage.style.display = 'block';
+        chatOutput.scrollTop = chatOutput.scrollHeight; // Scroll down to show error potentially
+    }
+
+    // Function to hide errors
+    function hideError() {
+        errorMessage.style.display = 'none';
+        errorText.textContent = '';
+    }
+
+    chatForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent default form submission (page reload)
+      hideError(); // Hide previous errors
+
+      const userQuery = chatInput.value.trim();
+      if (!userQuery) {
+        return; // Don't send empty messages
+      }
+
+      // Display user's question immediately
+      addMessage('You', userQuery);
+      chatInput.value = ''; // Clear the input field
+      sendButton.disabled = true; // Disable button while waiting
+      addMessage('AI', 'Thinking...'); // Show thinking indicator
+
+      try {
+        const response = await fetch('/api/chat/', { // Send to our new Hapi API endpoint
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query: userQuery }),
+        });
+
+        // Remove the "Thinking..." message
+        const thinkingMsg = Array.from(chatOutput.getElementsByTagName('p')).pop();
+        if (thinkingMsg && thinkingMsg.textContent.includes('AI: Thinking...')) {
+            chatOutput.removeChild(thinkingMsg);
+        }
+
+        if (!response.ok) {
+          // Try to get error message from server response body
+          let errorMsg = `Error: ${response.status} ${response.statusText}`;
+          try {
+              const errorData = await response.json();
+              errorMsg = errorData.message || errorMsg;
+          } catch (e) {
+              // Ignore if response body is not JSON or empty
+          }
+          throw new Error(errorMsg); // Throw error to be caught below
+        }
+
+        const data = await response.json();
+
+        // Display AI's response
+        // Adjust 'data.answer' based on the actual structure of the response from your backend
+        addMessage('AI', data.answer || 'Sorry, I could not get a response.');
+
+      } catch (error) {
+        console.error('Chat request failed:', error);
+         // Remove the "Thinking..." message if an error occurred before getting a response
+        const thinkingMsg = Array.from(chatOutput.getElementsByTagName('p')).pop();
+        if (thinkingMsg && thinkingMsg.textContent.includes('AI: Thinking...')) {
+            chatOutput.removeChild(thinkingMsg);
+        }
+        addMessage('Error', 'Could not reach the AI service.'); // Add error to chat
+        displayError(`Failed to get response: ${error.message}`); // Show error summary
+      } finally {
+         sendButton.disabled = false; // Re-enable button
+         chatInput.focus(); // Set focus back to input
+      }
+    });
+  </script>
 
 {% endblock %}

@@ -1,0 +1,12 @@
+{% extends "layouts/page.njk" %}
+
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+{% block content %}
+{{ govukPanel({
+  titleText: "File uploaded",
+  html: "Your reference number<br><strong>" + reference + "</strong>"
+}) }}
+<p class="govuk-body">Keep this reference safe. You can <a class="govuk-link" href="/check-upload-status">check your upload status</a> at any time.</p>
+<a class="govuk-link" href="/upload">Upload another file</a>
+{% endblock %}
