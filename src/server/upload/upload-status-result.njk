@@ -1,0 +1,16 @@
+{% extends "layouts/page.njk" %}
+{% block pageTitle %}Upload status{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">Upload status</h1>
+  <div class="govuk-panel govuk-panel--confirmation">
+    <h2 class="govuk-panel__title">Reference: {{ reference }}</h2>
+    <div class="govuk-panel__body">
+      Status: <strong>{{ status }}</strong>
+    </div>
+  </div>
+  {% if details %}
+    <pre>{{ details | dump }}</pre>
+  {% endif %}
+  <a class="govuk-link" href="/check-upload-status">Check another reference</a>
+{% endblock %}

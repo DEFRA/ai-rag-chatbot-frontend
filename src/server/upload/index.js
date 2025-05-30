@@ -1,4 +1,8 @@
-import { getUploadPage, getUploadToUploaderPage } from './controller.js'
+import {
+  getUploadPage,
+  getUploadToUploaderPage,
+  checkUploadStatusHandler
+} from './controller.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -26,6 +30,19 @@ export const upload = {
           method: 'GET',
           path: '/upload-to-uploader',
           handler: getUploadToUploaderPage
+        },
+        {
+          method: 'GET',
+          path: '/check-upload-status',
+          handler: (request, h) => {
+            // Render the status check form
+            return h.view('upload/check-upload-status')
+          }
+        },
+        {
+          method: 'POST',
+          path: '/check-upload-status',
+          handler: checkUploadStatusHandler
         }
       ])
     }

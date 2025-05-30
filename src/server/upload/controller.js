@@ -72,3 +72,44 @@ export function getUploadToUploaderPage(request, h) {
   const { uploadUrl, reference } = request.query
   return h.view('upload/upload-to-uploader', { uploadUrl, reference })
 }
+
+export async function checkUploadStatusHandler(request, h) {
+  const { reference } = request.payload
+  if (!reference) {
+    return h.view('upload/check-upload-status', {
+      error: 'Enter your reference number'
+    })
+  }
+  let uploadId
+  try {
+    uploadId = await redisClient.get(`reference:${reference}`)
+  } catch (err) {
+    return h.view('upload/check-upload-status', {
+      error: 'Error looking up reference'
+    })
+  }
+  if (!uploadId) {
+    return h.view('upload/check-upload-status', {
+      error: 'Reference not found'
+    })
+  }
+  // Poll cdp-uploader for status
+  try {
+    const { payload } = await Wreck.get(
+      `${CDP_UPLOADER_URL}/status/${uploadId}`,
+      { json: true }
+    )
+    const status = payload.uploadStatus || 'unknown'
+    return h.view('upload/upload-status-result', {
+      reference,
+      status,
+      details: payload
+    })
+  } catch (err) {
+    return h.view('upload/upload-status-result', {
+      reference,
+      status: 'error',
+      details: { error: 'Failed to fetch status' }
+    })
+  }
+}
