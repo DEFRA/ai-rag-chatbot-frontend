@@ -9,11 +9,12 @@ const redisClient = buildRedisClient(config.get('redis'))
 
 const CDP_UPLOADER_URL = process.env.CDP_UPLOADER_URL ?? 'http://localhost:7337'
 const BACKEND_CALLBACK_URL =
-  process.env.BACKEND_CALLBACK_URL ?? 'http://localhost:8085/uploader-callback'
+  process.env.BACKEND_CALLBACK_URL ??
+  'http://backend-service:8085/uploader-callback'
 const S3_BUCKET = process.env.S3_BUCKET ?? 'ai-rag-bucket'
 
 function generateReferenceNumber() {
-  // GOV.UK style: 3-4-3 alphanumeric, e.g. ABC-1234-XYZ
+  // GOV.UK style: 3-4-3 alphanumeric, e.g. ABC1234XYZ
   const alpha = () =>
     Math.random()
       .toString(36)
@@ -21,7 +22,7 @@ function generateReferenceNumber() {
       .replace(/[^A-Z]/g, '')
       .slice(0, 3)
   const num = () => Math.floor(1000 + Math.random() * 9000)
-  return `${alpha()}-${num()}-${alpha()}`
+  return `${alpha()}${num()}${alpha()}`
 }
 
 export async function getUploadPage(request, h) {
