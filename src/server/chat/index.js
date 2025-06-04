@@ -37,6 +37,29 @@ export const chat = {
             plugins:
               process.env.NODE_ENV === 'production' ? { crumb: true } : {}
           }
+        },
+        {
+          method: 'POST',
+          path: '/api/chat/reset',
+          handler: chatController.handleChatReset, // New handler for reset
+          options: {
+            validate: {
+              payload: (value) => {
+                if (
+                  !value ||
+                  typeof value.user_id !== 'string' ||
+                  value.user_id.trim() === ''
+                ) {
+                  throw new Error(
+                    'Missing or invalid "user_id" in request body.'
+                  )
+                }
+                return value
+              }
+            },
+            plugins:
+              process.env.NODE_ENV === 'production' ? { crumb: true } : {}
+          }
         }
       ])
     }

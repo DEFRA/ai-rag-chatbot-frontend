@@ -96,10 +96,58 @@ const handleChatQuery = async (request, h) => {
   }
 }
 
+/**
+ * Handles chat reset requests from the frontend,
+ * forwards them to the backend API, and returns the response.
+ * @satisfies {ServerRoute['handler']}
+ */
+const handleChatReset = async (request, h) => {
+  const backendUrl = config.get('apiServer') + '/query/reset'
+  const userId = request.payload?.user_id || 'default_user'
+  const logger = request.logger || console
+  logger.info(`Backend URL (reset): ${backendUrl}`)
+  try {
+    const { res, payload } = await Wreck.post(backendUrl, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify({ user_id: userId }),
+      json: true,
+      timeout: 15000
+    })
+    logger.info(`Backend response status (reset): ${res.statusCode}`)
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      const errorMessage =
+        payload?.message ||
+        payload?.error ||
+        `Backend returned status ${res.statusCode}`
+      logger.error(`Backend error (reset): ${errorMessage}`, payload)
+      if (res.statusCode === 400) return Boom.badRequest(errorMessage)
+      if (res.statusCode === 401 || res.statusCode === 403)
+        return Boom.unauthorized(errorMessage)
+      if (res.statusCode === 404) return Boom.notFound(errorMessage)
+      return Boom.badGateway(`Backend service failed: ${errorMessage}`)
+    }
+    return h.response(payload).code(200)
+  } catch (error) {
+    logger.error('Error calling backend API (reset):', error)
+    if (error.code === 'ECONNREFUSED') {
+      return Boom.badGateway('Could not connect to the backend AI service.')
+    }
+    if (error.output?.statusCode) {
+      throw error
+    }
+    return Boom.internal(
+      'An unexpected error occurred while resetting chat memory.'
+    )
+  }
+}
+
 // Export both handlers
 export const chatController = {
   getChatPage, // Handler for GET /chat
-  handleChatQuery // Handler for POST /api/chat
+  handleChatQuery, // Handler for POST /api/chat
+  handleChatReset // Handler for POST /api/chat/reset
 }
 
 /**

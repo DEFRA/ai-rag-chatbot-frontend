@@ -36,6 +36,15 @@
             id: "send-button"
           }
         }) }}
+
+        {{ govukButton({
+          text: "New Chat",
+          attributes: {
+            id: "new-chat-button"
+          }
+        }) }}
+
+         
       </form>
 
       {# Area to display errors #}
@@ -58,6 +67,7 @@
     const chatInput = document.getElementById('chat-input');
     const chatOutput = document.getElementById('chat-output');
     const sendButton = document.getElementById('send-button');
+    const newChatButton = document.getElementById('new-chat-button');
     const errorMessage = document.getElementById('error-message');
     const errorText = document.getElementById('error-text');
 
@@ -154,6 +164,48 @@
          sendButton.disabled = false; // Re-enable button
          chatInput.focus(); // Set focus back to input
       }
+    });
+
+    // Add event listener for New Chat button
+    newChatButton.addEventListener('click', async () => {
+      // Optionally, set user_id if you have per-user sessions. Here we use 'default_user'.
+      const userId = 'default_user';
+      try {
+        // Call backend to reset chat memory
+        const response = await fetch('/api/chat/reset', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ user_id: userId }),
+        });
+        if (!response.ok) {
+          let errorMsg = `Error: ${response.status} ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMsg = errorData.message || errorMsg;
+          } catch (e) {}
+          displayError(`Failed to reset chat: ${errorMsg}`);
+          return;
+        }
+      } catch (error) {
+        displayError(`Failed to reset chat: ${error.message}`);
+        return;
+      }
+      // Clear all chat messages
+      while (chatOutput.firstChild) {
+        chatOutput.removeChild(chatOutput.firstChild);
+      }
+      // Add initial greeting message
+      const greeting = document.createElement('p');
+      greeting.classList.add('govuk-body');
+      greeting.textContent = 'AI: Hello! How can I help you today?';
+      chatOutput.appendChild(greeting);
+      // Hide any error messages
+      hideError();
+      // Clear the input field and focus it
+      chatInput.value = '';
+      chatInput.focus();
     });
   </script>
 
