@@ -30,6 +30,7 @@ const getChatPage = (_request, h) => {
 const handleChatQuery = async (request, h) => {
   const backendUrl = config.get('apiServer') + '/query/'
   const userQuery = request.payload?.query // Get query from POST body
+  const userId = request.app.userId || 'default_user'
 
   if (!userQuery || typeof userQuery !== 'string' || userQuery.trim() === '') {
     return Boom.badRequest('Missing or invalid "query" in request body.')
@@ -40,13 +41,14 @@ const handleChatQuery = async (request, h) => {
 
   // Log the backend URL for debugging
   logger.info(`Backend URL: ${backendUrl}`)
+  logger.info(`User ID: ${userId}`)
 
   try {
     const { res, payload } = await Wreck.post(backendUrl, {
       headers: {
         'Content-Type': 'application/json'
       },
-      payload: JSON.stringify({ query: userQuery }),
+      payload: JSON.stringify({ query: userQuery, user_id: userId }),
       json: true,
       timeout: 15000
     })
@@ -103,9 +105,10 @@ const handleChatQuery = async (request, h) => {
  */
 const handleChatReset = async (request, h) => {
   const backendUrl = config.get('apiServer') + '/query/reset'
-  const userId = request.payload?.user_id || 'default_user'
+  const userId = request.app.userId || 'default_user'
   const logger = request.logger || console
   logger.info(`Backend URL (reset): ${backendUrl}`)
+  logger.info(`User ID (reset): ${userId}`)
   try {
     const { res, payload } = await Wreck.post(backendUrl, {
       headers: {

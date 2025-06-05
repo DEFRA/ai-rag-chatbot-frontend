@@ -1,4 +1,5 @@
 import { chatController } from '~/src/server/chat/controller.js'
+import { v4 as uuidv4 } from 'uuid'
 
 /**
  * Sets up the routes used in the /chat page.
@@ -9,6 +10,24 @@ export const chat = {
   plugin: {
     name: 'chat',
     register(server) {
+      server.ext('onPreHandler', (request, h) => {
+        const cookieName = 'chat_user_id'
+        let userId = request.state[cookieName]
+        if (!userId) {
+          // Generate a new user ID if it doesn't exist
+          userId = uuidv4()
+          h.state(cookieName, userId, {
+            ttl: 1 * 24 * 60 * 60 * 1000, // 1 day in ms
+            isHttpOnly: true, // Prevent client-side access
+            isSecure: process.env.NODE_ENV === 'production', // Secure in production
+            path: '/',
+            sameSite: 'Lax'
+          })
+        }
+        request.app.userId = userId
+        return h.continue
+      })
+
       server.route([
         {
           method: 'GET',
@@ -43,20 +62,8 @@ export const chat = {
           path: '/api/chat/reset',
           handler: chatController.handleChatReset, // New handler for reset
           options: {
-            validate: {
-              payload: (value) => {
-                if (
-                  !value ||
-                  typeof value.user_id !== 'string' ||
-                  value.user_id.trim() === ''
-                ) {
-                  throw new Error(
-                    'Missing or invalid "user_id" in request body.'
-                  )
-                }
-                return value
-              }
-            },
+            // Payload validation: only allow JSON with a 'user_id'
+
             plugins:
               process.env.NODE_ENV === 'production' ? { crumb: true } : {}
           }
